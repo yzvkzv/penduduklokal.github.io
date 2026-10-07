@@ -3,13 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Database Kependudukan - Ringan</title>
+    <title>Database Kependudukan & Warga</title>
     <!-- Library SheetJS untuk membaca file Excel -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
         :root {
             --primary-color: #2563eb;
             --success-color: #16a34a;
+            --danger-color: #dc2626;
             --bg-color: #f8fafc;
             --card-bg: #ffffff;
             --text-main: #1e293b;
@@ -26,7 +27,7 @@
         }
 
         .container {
-            max-width: 800px;
+            max-width: 900px;
             margin: 20px auto 40px auto;
         }
 
@@ -66,10 +67,12 @@
             display: flex;
             gap: 12px;
             margin-top: 12px;
+            flex-wrap: wrap;
         }
 
         input[type="text"], input[type="file"] {
             flex: 1;
+            min-width: 200px;
             padding: 10px 16px;
             border: 1px solid var(--border-color);
             border-radius: 8px;
@@ -95,8 +98,11 @@
         }
 
         button:hover {
-            background-color: #1d4ed8;
+            opacity: 0.9;
         }
+
+        .btn-success { background-color: var(--success-color); }
+        .btn-danger { background-color: var(--danger-color); }
 
         .status-import {
             margin-top: 10px;
@@ -111,6 +117,7 @@
             border-radius: 12px;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
             display: none;
+            margin-bottom: 24px;
         }
 
         .result-item {
@@ -133,6 +140,35 @@
             font-weight: 600;
             color: var(--text-main);
         }
+
+        /* Styling Tabel Daftar Warga */
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+            margin-top: 12px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.9rem;
+        }
+
+        th, td {
+            padding: 12px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            background-color: #f1f5f9;
+            color: var(--text-main);
+            font-weight: 600;
+        }
+
+        tr:hover {
+            background-color: #f8fafc;
+        }
     </style>
 </head>
 <body>
@@ -140,21 +176,22 @@
     <div class="container">
         <header class="app-header">
             <h1>Database Kependudukan</h1>
-            <p>Pencarian & Import Data Kilat (Firebase)</p>
+            <p>Manajemen & Pencarian Data Warga Terintegrasi</p>
         </header>
 
-        <!-- Kotak Import File Excel -->
+        <!-- 1. Import Excel -->
         <div class="card-box">
             <h2>1. Import Excel Kilat ke Server</h2>
-            <p style="color: var(--text-muted); font-size: 0.9rem;">Pilih file Excel untuk diunggah secara cepat ke database.</p>
+            <p style="color: var(--text-muted); font-size: 0.9rem;">Pilih file Excel (.xlsx / .xls) untuk diunggah ke database.</p>
             <div class="input-group">
                 <input type="file" id="excelFile" accept=".xlsx, .xls, .csv">
-                <button onclick="uploadKilat()" style="background-color: var(--success-color);">Upload Kilat</button>
+                <button onclick="uploadKilat()" class="btn-success">Upload Kilat</button>
+                <button onclick="hapusSemuaData()" class="btn-danger">Hapus Semua Data</button>
             </div>
             <div id="statusText" class="status-import"></div>
         </div>
 
-        <!-- Kotak Pencarian Data -->
+        <!-- 2. Cari Data -->
         <div class="card-box">
             <h2>2. Cari Data Cepat</h2>
             <p style="color: var(--text-muted); font-size: 0.9rem;">Ketik NIK atau Nama warga yang ingin dicari.</p>
@@ -164,32 +201,46 @@
             </div>
         </div>
 
-        <!-- Hasil Pencarian -->
+        <!-- Hasil Pencarian Tunggal -->
         <div class="result-card" id="resultCard">
             <h3 style="margin-top:0; color: var(--primary-color);">Detail Identitas</h3>
-            <div class="result-item">
-                <span class="label">NIK</span>
-                <span class="value" id="resNik">-</span>
+            <div class="result-item"><span class="label">NIK</span><span class="value" id="resNik">-</span></div>
+            <div class="result-item"><span class="label">No. KK / NIB</span><span class="value" id="resKk">-</span></div>
+            <div class="result-item"><span class="label">Nama Lengkap</span><span class="value" id="resNama">-</span></div>
+            <div class="result-item"><span class="label">Alamat</span><span class="value" id="resAlamat">-</span></div>
+        </div>
+
+        <!-- 3. Daftar Seluruh Warga -->
+        <div class="card-box">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <h2 style="margin: 0;">3. Daftar Seluruh Warga di Server</h2>
+                <button onclick="muatDaftarWarga()">Tampilkan / Muat Ulang Tabel</button>
             </div>
-            <div class="result-item">
-                <span class="label">No. KK / NIB</span>
-                <span class="value" id="resKk">-</span>
-            </div>
-            <div class="result-item">
-                <span class="label">Nama Lengkap</span>
-                <span class="value" id="resNama">-</span>
-            </div>
-            <div class="result-item">
-                <span class="label">Alamat</span>
-                <span class="value" id="resAlamat">-</span>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>No</th>
+                            <th>NIK</th>
+                            <th>Nama Lengkap</th>
+                            <th>No. KK / NIB</th>
+                            <th>Alamat</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabelWargaBody">
+                        <tr>
+                            <td colspan="5" style="text-align: center; color: var(--text-muted);">Klik tombol "Tampilkan / Muat Ulang Tabel" di atas untuk melihat data.</td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
 
-    <!-- Skrip Firebase & Logika Optimasi Kilat -->
+    <!-- Skrip Firebase & Logika Aplikasi -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, getDocs, writeBatch, doc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, setDoc, deleteDoc, doc, writeBatch } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAzOfst74GWHTVVGY2L-H4K5-En8og",
@@ -203,7 +254,7 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // Upload Kilat Menggunakan Batch Write (Kirim sekaligus per kelompok)
+        // Upload Kilat Excel
         window.uploadKilat = async function() {
             const fileInput = document.getElementById('excelFile');
             const statusText = document.getElementById('statusText');
@@ -247,7 +298,6 @@
                                 count++;
                                 batchCount++;
 
-                                // Firestore membatasi maksimal 500 operasi per batch
                                 if (batchCount >= 400) {
                                     await batch.commit();
                                     batch = writeBatch(db);
@@ -257,25 +307,24 @@
                         }
                     }
 
-                    // Sisa batch terakhir
                     if (batchCount > 0) {
                         await batch.commit();
                     }
 
                     statusText.innerText = `Sukses Kilat! ${count} data warga tersimpan permanen.`;
+                    muatDaftarWarga(); // Otomatis perbarui tabel
                 } catch (error) {
                     console.error("Error:", error);
                     alert("Gagal mengunggah: " + error.message);
                     statusText.innerText = "";
                 }
             };
-
             reader.readAsArrayBuffer(file);
         };
 
         // Pencarian Cepat
         window.cariDataKilat = async function() {
-            const keyword = document.getElementById('searchInput').value.trim();
+            const keyword = document.getElementById('searchInput').value.trim().toLowerCase();
             const resultCard = document.getElementById('resultCard');
 
             if (!keyword) {
@@ -284,16 +333,15 @@
             }
 
             try {
-                const wargaRef = collection(db, "warga");
-                const querySnapshot = await getDocs(wargaRef);
-                
+                const querySnapshot = await getDocs(collection(db, "warga"));
                 let ditemukan = null;
+
                 querySnapshot.forEach((docSnap) => {
                     const data = docSnap.data();
                     const nik = String(data.nik || '').toLowerCase();
                     const nama = String(data.nama || '').toLowerCase();
 
-                    if (nik.includes(keyword.toLowerCase()) || nama.includes(keyword.toLowerCase())) {
+                    if (nik.includes(keyword) || nama.includes(keyword)) {
                         ditemukan = data;
                     }
                 });
@@ -311,6 +359,71 @@
             } catch (error) {
                 console.error("Error pencarian:", error);
                 alert("Terjadi kesalahan saat mencari data.");
+            }
+        };
+
+        // Tampilkan Semua Data ke Tabel
+        window.muatDaftarWarga = async function() {
+            const tbody = document.getElementById('tabelWargaBody');
+            tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted);">Memuat data dari server...</td></tr>`;
+
+            try {
+                const querySnapshot = await getDocs(collection(db, "warga"));
+                tbody.innerHTML = "";
+
+                if (querySnapshot.empty) {
+                    tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted);">Belum ada data tersimpan di server.</td></tr>`;
+                    return;
+                }
+
+                let no = 1;
+                querySnapshot.forEach((docSnap) => {
+                    const data = docSnap.data();
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${no++}</td>
+                        <td>${data.nik || '-'}</td>
+                        <td>${data.nama || '-'}</td>
+                        <td>${data.no_kk || '-'}</td>
+                        <td>${data.alamat || '-'}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch (error) {
+                console.error("Error memuat daftar:", error);
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: red;">Gagal memuat data dari server.</td></tr>`;
+            }
+        };
+
+        // Hapus Semua Data di Server
+        window.hapusSemuaData = async function() {
+            if (!confirm("Yakin ingin menghapus SELURUH data warga di server? Tindakan ini tidak dapat dibatalkan!")) {
+                return;
+            }
+
+            try {
+                const statusText = document.getElementById('statusText');
+                statusText.innerText = "Menghapus seluruh data di server...";
+                
+                const querySnapshot = await getDocs(collection(db, "warga"));
+                let batch = writeBatch(db);
+                let count = 0;
+
+                querySnapshot.forEach((docSnap) => {
+                    batch.delete(docSnap.ref);
+                    count++;
+                });
+
+                if (count > 0) {
+                    await batch.commit();
+                }
+
+                statusText.innerText = "Semua data berhasil dihapus!";
+                muatDaftarWarga(); // Kosongkan tabel
+                document.getElementById('resultCard').style.display = "none";
+            } catch (error) {
+                console.error("Error menghapus:", error);
+                alert("Gagal menghapus data: " + error.message);
             }
         };
     </script>
