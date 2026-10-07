@@ -3,243 +3,147 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Database Kependudukan & Warga</title>
+    <title>Dashboard Kependudukan - Professional</title>
+    <!-- Tailwind CSS untuk UI Profesional -->
+    <script src="https://cdn.tailwindcss.com"></script>
     <!-- Library SheetJS untuk membaca file Excel -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <style>
-        :root {
-            --primary-color: #2563eb;
-            --success-color: #16a34a;
-            --danger-color: #dc2626;
-            --bg-color: #f8fafc;
-            --card-bg: #ffffff;
-            --text-main: #1e293b;
-            --text-muted: #64748b;
-            --border-color: #e2e8f0;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            margin: 0;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 900px;
-            margin: 20px auto 40px auto;
-        }
-
-        .app-header {
-            text-align: center;
-            margin-bottom: 32px;
-        }
-
-        .app-header h1 {
-            font-size: 2rem;
-            color: var(--text-main);
-            margin-bottom: 8px;
-            font-weight: 700;
-        }
-
-        .app-header p {
-            color: var(--text-muted);
-            font-size: 0.95rem;
-            margin: 0;
-        }
-
-        .card-box {
-            background: var(--card-bg);
-            padding: 24px;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            margin-bottom: 24px;
-        }
-
-        .card-box h2 {
-            margin-top: 0;
-            font-size: 1.25rem;
-            color: var(--text-main);
-        }
-
-        .input-group {
-            display: flex;
-            gap: 12px;
-            margin-top: 12px;
-            flex-wrap: wrap;
-        }
-
-        input[type="text"], input[type="file"] {
-            flex: 1;
-            min-width: 200px;
-            padding: 10px 16px;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            font-size: 1rem;
-            outline: none;
-            background: #fff;
-        }
-
-        input[type="text"]:focus {
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-        }
-
-        button {
-            background-color: var(--primary-color);
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 8px;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-
-        button:hover {
-            opacity: 0.9;
-        }
-
-        .btn-success { background-color: var(--success-color); }
-        .btn-danger { background-color: var(--danger-color); }
-
-        .status-import {
-            margin-top: 10px;
-            font-size: 0.85rem;
-            color: var(--success-color);
-            font-weight: 600;
-        }
-
-        .result-card {
-            background: var(--card-bg);
-            padding: 24px;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            display: none;
-            margin-bottom: 24px;
-        }
-
-        .result-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 10px 0;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .result-item:last-child {
-            border-bottom: none;
-        }
-
-        .label {
-            color: var(--text-muted);
-            font-weight: 500;
-        }
-
-        .value {
-            font-weight: 600;
-            color: var(--text-main);
-        }
-
-        /* Styling Tabel Daftar Warga */
-        .table-responsive {
-            width: 100%;
-            overflow-x: auto;
-            margin-top: 12px;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            text-align: left;
-            font-size: 0.9rem;
-        }
-
-        th, td {
-            padding: 12px;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        th {
-            background-color: #f1f5f9;
-            color: var(--text-main);
-            font-weight: 600;
-        }
-
-        tr:hover {
-            background-color: #f8fafc;
-        }
-    </style>
 </head>
-<body>
+<body class="bg-slate-100 text-slate-800 font-sans antialiased min-h-screen flex flex-col justify-between">
 
-    <div class="container">
-        <header class="app-header">
-            <h1>Database Kependudukan</h1>
-            <p>Manajemen & Pencarian Data Warga Terintegrasi</p>
-        </header>
-
-        <!-- 1. Import Excel -->
-        <div class="card-box">
-            <h2>1. Import Excel Kilat ke Server</h2>
-            <p style="color: var(--text-muted); font-size: 0.9rem;">Pilih file Excel (.xlsx / .xls) untuk diunggah ke database.</p>
-            <div class="input-group">
-                <input type="file" id="excelFile" accept=".xlsx, .xls, .csv">
-                <button onclick="uploadKilat()" class="btn-success">Upload Kilat</button>
-                <button onclick="hapusSemuaData()" class="btn-danger">Hapus Semua Data</button>
+    <!-- CONTAINER UTAMA LOGIN & APLIKASI -->
+    <div id="appContainer" class="max-w-5xl mx-auto px-4 py-8 w-full flex-grow">
+        
+        <!-- BAGIAN 1: HALAMAN LOGIN (Default Tampil) -->
+        <div id="loginSection" class="max-w-md mx-auto bg-white rounded-2xl shadow-xl p-8 mt-12 border border-slate-200">
+            <div class="text-center mb-8">
+                <h1 class="text-2xl font-bold text-slate-900">Admin Portal</h1>
+                <p class="text-sm text-slate-500 mt-1">Silakan masuk untuk mengelola database kependudukan</p>
             </div>
-            <div id="statusText" class="status-import"></div>
+            
+            <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-5">
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-2">Email Admin</label>
+                    <input type="email" id="loginEmail" required placeholder="admin@domain.com" class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-600 focus:outline-none text-sm transition">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-2">Password</label>
+                    <input type="password" id="loginPassword" required placeholder="••••••••" class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-600 focus:outline-none text-sm transition">
+                </div>
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-xl transition shadow-lg shadow-blue-500/25 text-sm">
+                    Masuk ke Dashboard
+                </button>
+            </form>
+            <div id="loginError" class="mt-4 text-center text-xs text-red-600 font-medium hidden"></div>
         </div>
 
-        <!-- 2. Cari Data -->
-        <div class="card-box">
-            <h2>2. Cari Data Cepat</h2>
-            <p style="color: var(--text-muted); font-size: 0.9rem;">Ketik NIK atau Nama warga yang ingin dicari.</p>
-            <div class="input-group">
-                <input type="text" id="searchInput" placeholder="Ketik NIK / Nama..." onkeypress="if(event.key === 'Enter') cariDataKilat()">
-                <button onclick="cariDataKilat()">Cari</button>
+        <!-- BAGIAN 2: DASHBOARD UTAMA (Disembunyikan sebelum Login) -->
+        <div id="dashboardSection" class="hidden space-y-6">
+            
+            <!-- Header Navigasi Dashboard -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 flex flex-col sm:flex-row justify-between items-center gap-4">
+                <div>
+                    <h1 class="text-2xl font-bold text-slate-900">Database Kependudukan</h1>
+                    <p class="text-sm text-slate-500">Sistem Manajemen & Pencarian Data Warga Terintegrasi</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <span id="userEmailDisplay" class="text-xs bg-slate-100 text-slate-600 px-3 py-1.5 rounded-lg font-medium"></span>
+                    <button onclick="handleLogout()" class="bg-red-50 hover:bg-red-100 text-red-600 font-medium px-4 py-2 rounded-xl text-sm transition border border-red-200">
+                        Keluar
+                    </button>
+                </div>
             </div>
-        </div>
 
-        <!-- Hasil Pencarian Tunggal -->
-        <div class="result-card" id="resultCard">
-            <h3 style="margin-top:0; color: var(--primary-color);">Detail Identitas</h3>
-            <div class="result-item"><span class="label">NIK</span><span class="value" id="resNik">-</span></div>
-            <div class="result-item"><span class="label">No. KK / NIB</span><span class="value" id="resKk">-</span></div>
-            <div class="result-item"><span class="label">Nama Lengkap</span><span class="value" id="resNama">-</span></div>
-            <div class="result-item"><span class="label">Alamat</span><span class="value" id="resAlamat">-</span></div>
-        </div>
+            <!-- Grid Kontrol Utama -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Box 1: Import Excel -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 flex flex-col justify-between">
+                    <div>
+                        <h2 class="text-lg font-semibold text-slate-900 mb-1">Import Excel Kilat</h2>
+                        <p class="text-xs text-slate-500 mb-4">Pilih file Excel (.xlsx / .xls) untuk sinkronisasi ke server.</p>
+                        <input type="file" id="excelFile" accept=".xlsx, .xls, .csv" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 mb-4 border border-slate-200 rounded-xl p-2">
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="uploadKilat()" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2.5 px-4 rounded-xl text-sm transition shadow-md shadow-emerald-600/20">
+                            Upload Kilat
+                        </button>
+                        <button onclick="hapusSemuaData()" class="bg-red-600 hover:bg-red-700 text-white font-medium py-2.5 px-4 rounded-xl text-sm transition shadow-md shadow-red-600/20">
+                            Reset Data
+                        </button>
+                    </div>
+                    <div id="statusText" class="mt-3 text-xs font-semibold text-emerald-600"></div>
+                </div>
 
-        <!-- 3. Daftar Seluruh Warga -->
-        <div class="card-box">
-            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-                <h2 style="margin: 0;">3. Daftar Seluruh Warga di Server</h2>
-                <button onclick="muatDaftarWarga()">Tampilkan / Muat Ulang Tabel</button>
+                <!-- Box 2: Pencarian Cepat -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 flex flex-col justify-between">
+                    <div>
+                        <h2 class="text-lg font-semibold text-slate-900 mb-1">Pencarian Data Warga</h2>
+                        <p class="text-xs text-slate-500 mb-4">Cari instan berdasarkan NIK atau Nama lengkap.</p>
+                        <div class="flex gap-2 mb-4">
+                            <input type="text" id="searchInput" placeholder="Ketik NIK / Nama..." onkeypress="if(event.key === 'Enter') cariDataKilat()" class="flex-1 px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-600 focus:outline-none text-sm transition">
+                            <button onclick="cariDataKilat()" class="bg-blue-600 hover:bg-blue-700 text-white font-medium px-5 py-2.5 rounded-xl text-sm transition shadow-md shadow-blue-600/20">
+                                Cari
+                            </button>
+                        </div>
+                    </div>
+                    <div class="text-xs text-slate-400 italic">Tekan Enter atau klik tombol Cari untuk melihat detail.</div>
+                </div>
             </div>
-            <div class="table-responsive">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>No</th>
-                            <th>NIK</th>
-                            <th>Nama Lengkap</th>
-                            <th>No. KK / NIB</th>
-                            <th>Alamat</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tabelWargaBody">
-                        <tr>
-                            <td colspan="5" style="text-align: center; color: var(--text-muted);">Klik tombol "Tampilkan / Muat Ulang Tabel" di atas untuk melihat data.</td>
-                        </tr>
-                    </tbody>
-                </table>
+
+            <!-- Hasil Pencarian Tunggal -->
+            <div id="resultCard" class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 hidden">
+                <h3 class="text-md font-semibold text-blue-600 mb-4">Detail Identitas Warga</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-100"><span class="text-slate-400 block text-xs mb-1">NIK</span><span class="font-semibold text-slate-900" id="resNik">-</span></div>
+                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-100"><span class="text-slate-400 block text-xs mb-1">No. KK / NIB</span><span class="font-semibold text-slate-900" id="resKk">-</span></div>
+                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-100"><span class="text-slate-400 block text-xs mb-1">Nama Lengkap</span><span class="font-semibold text-slate-900" id="resNama">-</span></div>
+                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-100"><span class="text-slate-400 block text-xs mb-1">Alamat</span><span class="font-semibold text-slate-900" id="resAlamat">-</span></div>
+                </div>
             </div>
+
+            <!-- Box 3: Tabel Daftar Seluruh Warga -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+                    <div>
+                        <h2 class="text-lg font-semibold text-slate-900">Rekapitulasi Data Server</h2>
+                        <p class="text-xs text-slate-500">Daftar seluruh warga yang tersimpan di database.</p>
+                    </div>
+                    <button onclick="muatDaftarWarga()" class="bg-slate-900 hover:bg-slate-800 text-white font-medium px-4 py-2 rounded-xl text-xs transition">
+                        Muat Ulang Tabel
+                    </button>
+                </div>
+                <div class="overflow-x-auto rounded-xl border border-slate-200">
+                    <table class="w-full text-left text-sm">
+                        <thead class="bg-slate-50 text-slate-700 uppercase font-semibold text-xs border-b border-slate-200">
+                            <tr>
+                                <th class="p-3.5">No</th>
+                                <th class="p-3.5">NIK</th>
+                                <th class="p-3.5">Nama Lengkap</th>
+                                <th class="p-3.5">No. KK / NIB</th>
+                                <th class="p-3.5">Alamat</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabelWargaBody" class="divide-y divide-slate-200 text-slate-600">
+                            <tr>
+                                <td colspan="5" class="p-6 text-center text-slate-400">Klik tombol "Muat Ulang Tabel" di atas untuk menampilkan data.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
         </div>
     </div>
 
-    <!-- Skrip Firebase & Logika Aplikasi -->
+    <!-- Footer -->
+    <footer class="text-center py-6 text-xs text-slate-400 border-t border-slate-200 bg-white mt-12">
+        Database Kependudukan &copy; 2026 &bull; Didukung oleh Firebase & Vercel
+    </footer>
+
+    <!-- Skrip Firebase & Logika Aplikasi Profesional -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { getFirestore, collection, getDocs, setDoc, deleteDoc, doc, writeBatch } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
@@ -252,7 +156,51 @@
         };
 
         const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
         const db = getFirestore(app);
+
+        // Pantau Status Login Pengguna
+        onAuthStateChanged(auth, (user) => {
+            const loginSection = document.getElementById('loginSection');
+            const dashboardSection = document.getElementById('dashboardSection');
+            const userEmailDisplay = document.getElementById('userEmailDisplay');
+
+            if (user) {
+                loginSection.classList.add('hidden');
+                dashboardSection.classList.remove('hidden');
+                userEmailDisplay.innerText = user.email;
+                muatDaftarWarga();
+            } else {
+                loginSection.classList.remove('hidden');
+                dashboardSection.classList.add('hidden');
+            }
+        });
+
+        // Handler Login
+        window.handleLogin = async function(event) {
+            event.preventDefault();
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            const errorDiv = document.getElementById('loginError');
+
+            errorDiv.classList.add('hidden');
+
+            try {
+                await signInWithEmailAndPassword(auth, email, password);
+            } catch (error) {
+                errorDiv.innerText = "Gagal masuk: Periksa kembali email dan password Anda.";
+                errorDiv.classList.remove('hidden');
+            }
+        };
+
+        // Handler Logout
+        window.handleLogout = async function() {
+            try {
+                await signOut(auth);
+            } catch (error) {
+                console.error("Gagal keluar:", error);
+            }
+        };
 
         // Upload Kilat Excel
         window.uploadKilat = async function() {
@@ -264,7 +212,7 @@
                 return;
             }
 
-            statusText.innerText = "Mengunggah data secara kilat ke server...";
+            statusText.innerText = "Mengunggah data secara kilat...";
             const file = fileInput.files[0];
             const reader = new FileReader();
 
@@ -311,8 +259,8 @@
                         await batch.commit();
                     }
 
-                    statusText.innerText = `Sukses Kilat! ${count} data warga tersimpan permanen.`;
-                    muatDaftarWarga(); // Otomatis perbarui tabel
+                    statusText.innerText = `Sukses! ${count} data berhasil disimpan.`;
+                    muatDaftarWarga();
                 } catch (error) {
                     console.error("Error:", error);
                     alert("Gagal mengunggah: " + error.message);
@@ -351,10 +299,10 @@
                     document.getElementById('resKk').innerText = ditemukan.no_kk;
                     document.getElementById('resNama').innerText = ditemukan.nama;
                     document.getElementById('resAlamat').innerText = ditemukan.alamat;
-                    resultCard.style.display = "block";
+                    resultCard.classList.remove('hidden');
                 } else {
                     alert("Data tidak ditemukan di server!");
-                    resultCard.style.display = "none";
+                    resultCard.classList.add('hidden');
                 }
             } catch (error) {
                 console.error("Error pencarian:", error);
@@ -365,14 +313,14 @@
         // Tampilkan Semua Data ke Tabel
         window.muatDaftarWarga = async function() {
             const tbody = document.getElementById('tabelWargaBody');
-            tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted);">Memuat data dari server...</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-slate-400">Memuat data dari server...</td></tr>`;
 
             try {
                 const querySnapshot = await getDocs(collection(db, "warga"));
                 tbody.innerHTML = "";
 
                 if (querySnapshot.empty) {
-                    tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted);">Belum ada data tersimpan di server.</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-slate-400">Belum ada data tersimpan di server.</td></tr>`;
                     return;
                 }
 
@@ -380,18 +328,19 @@
                 querySnapshot.forEach((docSnap) => {
                     const data = docSnap.data();
                     const tr = document.createElement('tr');
+                    tr.className = "hover:bg-slate-50 transition";
                     tr.innerHTML = `
-                        <td>${no++}</td>
-                        <td>${data.nik || '-'}</td>
-                        <td>${data.nama || '-'}</td>
-                        <td>${data.no_kk || '-'}</td>
-                        <td>${data.alamat || '-'}</td>
+                        <td class="p-3.5 font-medium">${no++}</td>
+                        <td class="p-3.5 font-mono text-xs">${data.nik || '-'}</td>
+                        <td class="p-3.5 font-semibold text-slate-900">${data.nama || '-'}</td>
+                        <td class="p-3.5 font-mono text-xs">${data.no_kk || '-'}</td>
+                        <td class="p-3.5">${data.alamat || '-'}</td>
                     `;
                     tbody.appendChild(tr);
                 });
             } catch (error) {
                 console.error("Error memuat daftar:", error);
-                tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: red;">Gagal memuat data dari server.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-red-500">Gagal memuat data dari server.</td></tr>`;
             }
         };
 
@@ -403,7 +352,7 @@
 
             try {
                 const statusText = document.getElementById('statusText');
-                statusText.innerText = "Menghapus seluruh data di server...";
+                statusText.innerText = "Menghapus seluruh data...";
                 
                 const querySnapshot = await getDocs(collection(db, "warga"));
                 let batch = writeBatch(db);
@@ -418,9 +367,9 @@
                     await batch.commit();
                 }
 
-                statusText.innerText = "Semua data berhasil dihapus!";
-                muatDaftarWarga(); // Kosongkan tabel
-                document.getElementById('resultCard').style.display = "none";
+                statusText.innerText = "Semua data berhasil dihapus.";
+                muatDaftarWarga();
+                document.getElementById('resultCard').classList.add('hidden');
             } catch (error) {
                 console.error("Error menghapus:", error);
                 alert("Gagal menghapus data: " + error.message);
