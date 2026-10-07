@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Database Kependudukan - Firebase</title>
-    <!-- Library SheetJS untuk membaca file Excel langsung di browser -->
+    <!-- Library SheetJS untuk membaca file Excel -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
         :root {
@@ -172,7 +172,7 @@
                 <span class="value" id="resNik">-</span>
             </div>
             <div class="result-item">
-                <span class="label">No. KK</span>
+                <span class="label">No. KK / NIB</span>
                 <span class="value" id="resKk">-</span>
             </div>
             <div class="result-item">
@@ -191,7 +191,6 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, getDocs, setDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // Konfigurasi Firebase dari project Localvibe milikmu[span_0](start_span)[span_0](end_span)
         const firebaseConfig = {
             apiKey: "AIzaSyAzOfst74GWHTVVGY2L-H4K5-En8og",
             authDomain: "localvibe-eb252.firebaseapp.com",
@@ -201,11 +200,9 @@
             appId: "1:15605656260:web:bb3297b4386a8e80eaf971"
         };
 
-        // Inisialisasi Firebase
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // Fungsi untuk mengimpor Excel dan menyimpannya ke Firestore
         window.uploadKeFirebase = async function() {
             const fileInput = document.getElementById('excelFile');
             const statusText = document.getElementById('statusText');
@@ -215,7 +212,7 @@
                 return;
             }
 
-            statusText.innerText = "Sedang memproses dan mengunggah ke server...";
+            statusText.innerText = "Sedang memproses semua sheet Excel ke server...";
             const file = fileInput.files[0];
             const reader = new FileReader();
 
@@ -223,27 +220,36 @@
                 try {
                     const data = new Uint8Array(e.target.result);
                     const workbook = XLSX.read(data, { type: 'array' });
-                    const sheetName = workbook.SheetNames[0];
-                    const listWarga = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
-
+                    
                     let count = 0;
-                    for (let warga of listWarga) {
-                        const nikVal = String(warga.nik || warga.NIK || '');
-                        if (nikVal) {
-                            await setDoc(doc(db, "warga", nikVal), {
-                                nik: nikVal,
-                                no_kk: String(warga.no_kk || warga.NO_KK || ''),
-                                nama: String(warga.nama || warga.NAMA || ''),
-                                alamat: String(warga.alamat || warga.ALAMAT || '')
-                            });
-                            count++;
+                    // Loop ke semua sheet yang ada di dalam file Excel
+                    for (let sheetName of workbook.SheetNames) {
+                        const sheet = workbook.Sheets[sheetName];
+                        const listWarga = XLSX.utils.sheet_to_json(sheet);
+
+                        for (let warga of listWarga) {
+                            // Mencari kolom NIK, Nama, dan Alamat dengan berbagai variasi penulisan huruf
+                            const nikVal = String(warga.nik || warga.NIK || warga.Nik || '').trim();
+                            const namaVal = String(warga.nama || warga.NAMA || warga.Nama || '').trim();
+                            const alamatVal = String(warga.alamat || warga.ALAMAT || warga.Alamat || '').trim();
+                            const kkVal = String(warga.no_kk || warga.NO_KK || warga.NIB || warga.nib || '-').trim();
+
+                            if (nikVal && nikVal !== 'undefined') {
+                                await setDoc(doc(db, "warga", nikVal), {
+                                    nik: nikVal,
+                                    no_kk: kkVal,
+                                    nama: namaVal || '-',
+                                    alamat: alamatVal || '-'
+                                });
+                                count++;
+                            }
                         }
                     }
 
-                    statusText.innerText = `Berhasil! ${count} data warga tersimpan permanen di server Firebase.`;
+                    statusText.innerText = `Berhasil! Total ${count} data warga tersimpan permanen di server Firebase.`;
                 } catch (error) {
                     console.error("Error:", error);
-                    alert("Gagal mengunggah data ke Firebase. Periksa console untuk detailnya.");
+                    alert("Gagal mengunggah data ke Firebase: " + error.message);
                     statusText.innerText = "";
                 }
             };
@@ -251,7 +257,6 @@
             reader.readAsArrayBuffer(file);
         };
 
-        // Fungsi Pencarian Data langsung dari Server Firebase
         window.cariDataFirebase = async function() {
             const keyword = document.getElementById('searchInput').value.trim();
             const resultCard = document.getElementById('resultCard');
