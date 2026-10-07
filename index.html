@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Database Kependudukan - Firebase</title>
+    <title>Database Kependudukan - Ringan</title>
     <!-- Library SheetJS untuk membaca file Excel -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
@@ -140,27 +140,27 @@
     <div class="container">
         <header class="app-header">
             <h1>Database Kependudukan</h1>
-            <p>Pencarian & Import Data NIK, KK, dan Identitas Warga</p>
+            <p>Pencarian & Import Data Kilat (Firebase)</p>
         </header>
 
-        <!-- Kotak Import File Excel ke Firebase -->
+        <!-- Kotak Import File Excel -->
         <div class="card-box">
-            <h2>1. Import Excel ke Server Firebase</h2>
-            <p style="color: var(--text-muted); font-size: 0.9rem;">Pilih file Excel (.xlsx / .xls / .csv) untuk diunggah langsung ke database server.</p>
+            <h2>1. Import Excel Kilat ke Server</h2>
+            <p style="color: var(--text-muted); font-size: 0.9rem;">Pilih file Excel untuk diunggah secara cepat ke database.</p>
             <div class="input-group">
                 <input type="file" id="excelFile" accept=".xlsx, .xls, .csv">
-                <button onclick="uploadKeFirebase()" style="background-color: var(--success-color);">Upload ke Server</button>
+                <button onclick="uploadKilat()" style="background-color: var(--success-color);">Upload Kilat</button>
             </div>
             <div id="statusText" class="status-import"></div>
         </div>
 
-        <!-- Kotak Pencarian Data dari Firebase -->
+        <!-- Kotak Pencarian Data -->
         <div class="card-box">
-            <h2>2. Cari Data di Server</h2>
-            <p style="color: var(--text-muted); font-size: 0.9rem;">Masukkan NIK atau Nama lengkap untuk mencari data di database.</p>
+            <h2>2. Cari Data Cepat</h2>
+            <p style="color: var(--text-muted); font-size: 0.9rem;">Ketik NIK atau Nama warga yang ingin dicari.</p>
             <div class="input-group">
-                <input type="text" id="searchInput" placeholder="Ketik NIK / Nama...">
-                <button onclick="cariDataFirebase()">Cari</button>
+                <input type="text" id="searchInput" placeholder="Ketik NIK / Nama..." onkeypress="if(event.key === 'Enter') cariDataKilat()">
+                <button onclick="cariDataKilat()">Cari</button>
             </div>
         </div>
 
@@ -186,10 +186,10 @@
         </div>
     </div>
 
-    <!-- Skrip Firebase & Logika Aplikasi -->
+    <!-- Skrip Firebase & Logika Optimasi Kilat -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, getDocs, setDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, writeBatch, doc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAzOfst74GWHTVVGY2L-H4K5-En8og",
@@ -203,7 +203,8 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        window.uploadKeFirebase = async function() {
+        // Upload Kilat Menggunakan Batch Write (Kirim sekaligus per kelompok)
+        window.uploadKilat = async function() {
             const fileInput = document.getElementById('excelFile');
             const statusText = document.getElementById('statusText');
 
@@ -212,7 +213,7 @@
                 return;
             }
 
-            statusText.innerText = "Sedang memproses semua sheet Excel ke server...";
+            statusText.innerText = "Mengunggah data secara kilat ke server...";
             const file = fileInput.files[0];
             const reader = new FileReader();
 
@@ -221,35 +222,50 @@
                     const data = new Uint8Array(e.target.result);
                     const workbook = XLSX.read(data, { type: 'array' });
                     
+                    let batch = writeBatch(db);
                     let count = 0;
-                    // Loop ke semua sheet yang ada di dalam file Excel
+                    let batchCount = 0;
+
                     for (let sheetName of workbook.SheetNames) {
                         const sheet = workbook.Sheets[sheetName];
                         const listWarga = XLSX.utils.sheet_to_json(sheet);
 
                         for (let warga of listWarga) {
-                            // Mencari kolom NIK, Nama, dan Alamat dengan berbagai variasi penulisan huruf
                             const nikVal = String(warga.nik || warga.NIK || warga.Nik || '').trim();
                             const namaVal = String(warga.nama || warga.NAMA || warga.Nama || '').trim();
                             const alamatVal = String(warga.alamat || warga.ALAMAT || warga.Alamat || '').trim();
                             const kkVal = String(warga.no_kk || warga.NO_KK || warga.NIB || warga.nib || '-').trim();
 
                             if (nikVal && nikVal !== 'undefined') {
-                                await setDoc(doc(db, "warga", nikVal), {
+                                const docRef = doc(db, "warga", nikVal);
+                                batch.set(docRef, {
                                     nik: nikVal,
                                     no_kk: kkVal,
                                     nama: namaVal || '-',
                                     alamat: alamatVal || '-'
                                 });
                                 count++;
+                                batchCount++;
+
+                                // Firestore membatasi maksimal 500 operasi per batch
+                                if (batchCount >= 400) {
+                                    await batch.commit();
+                                    batch = writeBatch(db);
+                                    batchCount = 0;
+                                }
                             }
                         }
                     }
 
-                    statusText.innerText = `Berhasil! Total ${count} data warga tersimpan permanen di server Firebase.`;
+                    // Sisa batch terakhir
+                    if (batchCount > 0) {
+                        await batch.commit();
+                    }
+
+                    statusText.innerText = `Sukses Kilat! ${count} data warga tersimpan permanen.`;
                 } catch (error) {
                     console.error("Error:", error);
-                    alert("Gagal mengunggah data ke Firebase: " + error.message);
+                    alert("Gagal mengunggah: " + error.message);
                     statusText.innerText = "";
                 }
             };
@@ -257,7 +273,8 @@
             reader.readAsArrayBuffer(file);
         };
 
-        window.cariDataFirebase = async function() {
+        // Pencarian Cepat
+        window.cariDataKilat = async function() {
             const keyword = document.getElementById('searchInput').value.trim();
             const resultCard = document.getElementById('resultCard');
 
