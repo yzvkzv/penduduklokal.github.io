@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Database Kependudukan - Firebase</title>
+    <!-- Library SheetJS untuk membaca file Excel langsung di browser -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --success-color: #16a34a;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 20px auto 40px auto;
+        }
+
+        .app-header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .app-header h1 {
+            font-size: 2rem;
+            color: var(--text-main);
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+
+        .app-header p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            margin: 0;
+        }
+
+        .card-box {
+            background: var(--card-bg);
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            margin-bottom: 24px;
+        }
+
+        .card-box h2 {
+            margin-top: 0;
+            font-size: 1.25rem;
+            color: var(--text-main);
+        }
+
+        .input-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 12px;
+        }
+
+        input[type="text"], input[type="file"] {
+            flex: 1;
+            padding: 10px 16px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 1rem;
+            outline: none;
+            background: #fff;
+        }
+
+        input[type="text"]:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: #1d4ed8;
+        }
+
+        .status-import {
+            margin-top: 10px;
+            font-size: 0.85rem;
+            color: var(--success-color);
+            font-weight: 600;
+        }
+
+        .result-card {
+            background: var(--card-bg);
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            display: none;
+        }
+
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .result-item:last-child {
+            border-bottom: none;
+        }
+
+        .label {
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .value {
+            font-weight: 600;
+            color: var(--text-main);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header class="app-header">
+            <h1>Database Kependudukan</h1>
+            <p>Pencarian & Import Data NIK, KK, dan Identitas Warga</p>
+        </header>
+
+        <!-- Kotak Import File Excel ke Firebase -->
+        <div class="card-box">
+            <h2>1. Import Excel ke Server Firebase</h2>
+            <p style="color: var(--text-muted); font-size: 0.9rem;">Pilih file Excel (.xlsx / .xls / .csv) untuk diunggah langsung ke database server.</p>
+            <div class="input-group">
+                <input type="file" id="excelFile" accept=".xlsx, .xls, .csv">
+                <button onclick="uploadKeFirebase()" style="background-color: var(--success-color);">Upload ke Server</button>
+            </div>
+            <div id="statusText" class="status-import"></div>
+        </div>
+
+        <!-- Kotak Pencarian Data dari Firebase -->
+        <div class="card-box">
+            <h2>2. Cari Data di Server</h2>
+            <p style="color: var(--text-muted); font-size: 0.9rem;">Masukkan NIK atau Nama lengkap untuk mencari data di database.</p>
+            <div class="input-group">
+                <input type="text" id="searchInput" placeholder="Ketik NIK / Nama...">
+                <button onclick="cariDataFirebase()">Cari</button>
+            </div>
+        </div>
+
+        <!-- Hasil Pencarian -->
+        <div class="result-card" id="resultCard">
+            <h3 style="margin-top:0; color: var(--primary-color);">Detail Identitas</h3>
+            <div class="result-item">
+                <span class="label">NIK</span>
+                <span class="value" id="resNik">-</span>
+            </div>
+            <div class="result-item">
+                <span class="label">No. KK</span>
+                <span class="value" id="resKk">-</span>
+            </div>
+            <div class="result-item">
+                <span class="label">Nama Lengkap</span>
+                <span class="value" id="resNama">-</span>
+            </div>
+            <div class="result-item">
+                <span class="label">Alamat</span>
+                <span class="value" id="resAlamat">-</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Skrip Firebase & Logika Aplikasi -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, getDocs, setDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        // Konfigurasi Firebase dari project Localvibe milikmu[span_0](start_span)[span_0](end_span)
+        const firebaseConfig = {
+            apiKey: "AIzaSyAzOfst74GWHTVVGY2L-H4K5-En8og",
+            authDomain: "localvibe-eb252.firebaseapp.com",
+            projectId: "localvibe-eb252",
+            storageBucket: "localvibe-eb252.appspot.com",
+            messagingSenderId: "15605656260",
+            appId: "1:15605656260:web:bb3297b4386a8e80eaf971"
+        };
+
+        // Inisialisasi Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Fungsi untuk mengimpor Excel dan menyimpannya ke Firestore
+        window.uploadKeFirebase = async function() {
+            const fileInput = document.getElementById('excelFile');
+            const statusText = document.getElementById('statusText');
+
+            if (fileInput.files.length === 0) {
+                alert("Pilih file Excel terlebih dahulu!");
+                return;
+            }
+
+            statusText.innerText = "Sedang memproses dan mengunggah ke server...";
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+
+            reader.onload = async function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const sheetName = workbook.SheetNames[0];
+                    const listWarga = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
+
+                    let count = 0;
+                    for (let warga of listWarga) {
+                        const nikVal = String(warga.nik || warga.NIK || '');
+                        if (nikVal) {
+                            await setDoc(doc(db, "warga", nikVal), {
+                                nik: nikVal,
+                                no_kk: String(warga.no_kk || warga.NO_KK || ''),
+                                nama: String(warga.nama || warga.NAMA || ''),
+                                alamat: String(warga.alamat || warga.ALAMAT || '')
+                            });
+                            count++;
+                        }
+                    }
+
+                    statusText.innerText = `Berhasil! ${count} data warga tersimpan permanen di server Firebase.`;
+                } catch (error) {
+                    console.error("Error:", error);
+                    alert("Gagal mengunggah data ke Firebase. Periksa console untuk detailnya.");
+                    statusText.innerText = "";
+                }
+            };
+
+            reader.readAsArrayBuffer(file);
+        };
+
+        // Fungsi Pencarian Data langsung dari Server Firebase
+        window.cariDataFirebase = async function() {
+            const keyword = document.getElementById('searchInput').value.trim();
+            const resultCard = document.getElementById('resultCard');
+
+            if (!keyword) {
+                alert("Masukkan NIK atau Nama yang dicari!");
+                return;
+            }
+
+            try {
+                const wargaRef = collection(db, "warga");
+                const querySnapshot = await getDocs(wargaRef);
+                
+                let ditemukan = null;
+                querySnapshot.forEach((docSnap) => {
+                    const data = docSnap.data();
+                    const nik = String(data.nik || '').toLowerCase();
+                    const nama = String(data.nama || '').toLowerCase();
+
+                    if (nik.includes(keyword.toLowerCase()) || nama.includes(keyword.toLowerCase())) {
+                        ditemukan = data;
+                    }
+                });
+
+                if (ditemukan) {
+                    document.getElementById('resNik').innerText = ditemukan.nik;
+                    document.getElementById('resKk').innerText = ditemukan.no_kk;
+                    document.getElementById('resNama').innerText = ditemukan.nama;
+                    document.getElementById('resAlamat').innerText = ditemukan.alamat;
+                    resultCard.style.display = "block";
+                } else {
+                    alert("Data tidak ditemukan di server!");
+                    resultCard.style.display = "none";
+                }
+            } catch (error) {
+                console.error("Error pencarian:", error);
+                alert("Terjadi kesalahan saat mencari data.");
+            }
+        };
+    </script>
+</body>
+</html>
