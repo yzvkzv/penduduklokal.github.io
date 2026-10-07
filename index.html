@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Kependudukan - Professional</title>
+    <title>Database Kependudukan - Pro</title>
     <!-- Tailwind CSS untuk UI Profesional -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Library SheetJS untuk membaca file Excel -->
@@ -11,33 +11,30 @@
 </head>
 <body class="bg-slate-100 text-slate-800 font-sans antialiased min-h-screen flex flex-col justify-between">
 
-    <!-- CONTAINER UTAMA LOGIN & APLIKASI -->
+    <!-- CONTAINER UTAMA -->
     <div id="appContainer" class="max-w-5xl mx-auto px-4 py-8 w-full flex-grow">
         
-        <!-- BAGIAN 1: HALAMAN LOGIN (Default Tampil) -->
+        <!-- BAGIAN 1: HALAMAN KUNCI / LOGIN PIN (Default Tampil) -->
         <div id="loginSection" class="max-w-md mx-auto bg-white rounded-2xl shadow-xl p-8 mt-12 border border-slate-200">
             <div class="text-center mb-8">
-                <h1 class="text-2xl font-bold text-slate-900">Admin Portal</h1>
-                <p class="text-sm text-slate-500 mt-1">Silakan masuk untuk mengelola database kependudukan</p>
+                <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center mx-auto mb-4 font-bold text-lg shadow-inner">🔒</div>
+                <h1 class="text-2xl font-bold text-slate-900">Akses Terbatas</h1>
+                <p class="text-sm text-slate-500 mt-1">Masukkan Sandi Rahasia untuk membuka Database</p>
             </div>
             
-            <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-5">
+            <form onsubmit="handleSimpleLogin(event)" class="space-y-5">
                 <div>
-                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-2">Email Admin</label>
-                    <input type="email" id="loginEmail" required placeholder="admin@domain.com" class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-600 focus:outline-none text-sm transition">
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-2">Password</label>
-                    <input type="password" id="loginPassword" required placeholder="••••••••" class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-600 focus:outline-none text-sm transition">
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-2">Kata Sandi Rahasia</label>
+                    <input type="password" id="secretPassword" required placeholder="Masukkan sandi..." class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-600 focus:outline-none text-sm transition text-center tracking-widest font-bold">
                 </div>
                 <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-xl transition shadow-lg shadow-blue-500/25 text-sm">
-                    Masuk ke Dashboard
+                    Buka Dashboard
                 </button>
             </form>
-            <div id="loginError" class="mt-4 text-center text-xs text-red-600 font-medium hidden"></div>
+            <div id="loginError" class="mt-4 text-center text-xs text-red-600 font-medium hidden">Sandi salah! Coba periksa kembali.</div>
         </div>
 
-        <!-- BAGIAN 2: DASHBOARD UTAMA (Disembunyikan sebelum Login) -->
+        <!-- BAGIAN 2: DASHBOARD UTAMA (Disembunyikan sebelum dimasukkan sandi) -->
         <div id="dashboardSection" class="hidden space-y-6">
             
             <!-- Header Navigasi Dashboard -->
@@ -47,9 +44,9 @@
                     <p class="text-sm text-slate-500">Sistem Manajemen & Pencarian Data Warga Terintegrasi</p>
                 </div>
                 <div class="flex items-center gap-3">
-                    <span id="userEmailDisplay" class="text-xs bg-slate-100 text-slate-600 px-3 py-1.5 rounded-lg font-medium"></span>
+                    <span class="text-xs bg-emerald-50 text-emerald-700 px-3 py-1.5 rounded-lg font-semibold border border-emerald-200">● Admin Aktif</span>
                     <button onclick="handleLogout()" class="bg-red-50 hover:bg-red-100 text-red-600 font-medium px-4 py-2 rounded-xl text-sm transition border border-red-200">
-                        Keluar
+                        Kunci Kembali
                     </button>
                 </div>
             </div>
@@ -140,10 +137,9 @@
         Database Kependudukan &copy; 2026 &bull; Didukung oleh Firebase & Vercel
     </footer>
 
-    <!-- Skrip Firebase & Logika Aplikasi Profesional -->
+    <!-- Skrip Firebase & Logika Aplikasi -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { getFirestore, collection, getDocs, setDoc, deleteDoc, doc, writeBatch } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
@@ -156,50 +152,42 @@
         };
 
         const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // Pantau Status Login Pengguna
-        onAuthStateChanged(auth, (user) => {
-            const loginSection = document.getElementById('loginSection');
-            const dashboardSection = document.getElementById('dashboardSection');
-            const userEmailDisplay = document.getElementById('userEmailDisplay');
-
-            if (user) {
-                loginSection.classList.add('hidden');
-                dashboardSection.classList.remove('hidden');
-                userEmailDisplay.innerText = user.email;
+        // CEK SESI LOGIN SAAT HALAMAN DIBUKA
+        window.onload = function() {
+            if (localStorage.getItem("admin_logged_in") === "true") {
+                document.getElementById('loginSection').classList.add('hidden');
+                document.getElementById('dashboardSection').classList.remove('hidden');
                 muatDaftarWarga();
-            } else {
-                loginSection.classList.remove('hidden');
-                dashboardSection.classList.add('hidden');
             }
-        });
+        };
 
-        // Handler Login
-        window.handleLogin = async function(event) {
+        // HANDLE LOGIN SANDI RAHASIA
+        window.handleSimpleLogin = function(event) {
             event.preventDefault();
-            const email = document.getElementById('loginEmail').value;
-            const password = document.getElementById('loginPassword').value;
+            const inputSandi = document.getElementById('secretPassword').value.trim();
             const errorDiv = document.getElementById('loginError');
 
-            errorDiv.classList.add('hidden');
+            // GANTI KATA SANDI DI SINI SESUAI KEINGINANMU
+            const SANDI_RAHASIA = "yzvkzv27";
 
-            try {
-                await signInWithEmailAndPassword(auth, email, password);
-            } catch (error) {
-                errorDiv.innerText = "Gagal masuk: Periksa kembali email dan password Anda.";
+            if (inputSandi === SANDI_RAHASIA) {
+                localStorage.setItem("admin_logged_in", "true");
+                document.getElementById('loginSection').classList.add('hidden');
+                document.getElementById('dashboardSection').classList.remove('hidden');
+                muatDaftarWarga();
+            } else {
                 errorDiv.classList.remove('hidden');
             }
         };
 
-        // Handler Logout
-        window.handleLogout = async function() {
-            try {
-                await signOut(auth);
-            } catch (error) {
-                console.error("Gagal keluar:", error);
-            }
+        // HANDLE LOGOUT / KUNCI KEMBALI
+        window.handleLogout = function() {
+            localStorage.removeItem("admin_logged_in");
+            document.getElementById('loginSection').classList.remove('hidden');
+            document.getElementById('dashboardSection').classList.add('hidden');
+            document.getElementById('secretPassword').value = "";
         };
 
         // Upload Kilat Excel
